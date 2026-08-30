@@ -1,0 +1,28 @@
+# Core (training + inference)
+torch>=2.1
+torchvision>=0.16
+numpy>=1.24
+pillow>=10.0
+scipy>=1.10
+transformers>=4.40
+diffusers>=0.27
+safetensors>=0.4
+
+# Demo app
+streamlit>=1.28
+gradio>=4.0
+
+# Production API
+fastapi>=0.104
+uvicorn>=0.24
+pydantic>=2.0
+pyyaml>=6.0
+
+# Optional: evaluation utilities
+# eval/fid.py         -> torchvision (already required)
+# eval/geneval.py     -> transformers (already required)
+# eval/mllm_judge.py  -> openai
+# training/repa.py    -> torch.hub DINOv2 download at runtime
+
+# Tests
+pytest>=8.0

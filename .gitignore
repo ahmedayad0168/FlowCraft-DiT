@@ -1,0 +1,31 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+env/
+
+# Data and artifacts
+data/
+coco_10k/
+checkpoints/
+outputs/
+samples/
+*.pt
+*.ckpt
+*.safetensors
+*.png
+*.jpg
+*.jpeg
+
+# Documentation visuals are intentionally versioned for the GitHub README.
+!docs/
+!docs/assets/
+!docs/assets/*.png
+!docs/assets/*.jpg
+!docs/assets/*.jpeg
+!docs/assets/*.svg
+
+# Secrets / local config
+.env
+*.local

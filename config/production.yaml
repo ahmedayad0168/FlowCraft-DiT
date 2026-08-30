@@ -1,0 +1,74 @@
+# Production Configuration for FlowCraft-DiT
+
+# Model Configuration
+model:
+  checkpoint_path: "checkpoints/flowcraft_step10000.pt"
+  device: "cuda"  # Options: cuda, cpu, mps, auto
+  use_ema: true
+  dtype: "bfloat16"  # Options: bfloat16, float16, float32
+
+# API Configuration
+api:
+  host: "0.0.0.0"
+  port: 8000
+  workers: 1  # Number of worker processes
+  log_level: "info"
+  enable_cors: true
+  max_request_size: 10  # MB
+
+# Streamlit UI Configuration
+ui:
+  port: 8501
+  headless: true
+  gather_usage_stats: false
+  max_upload_size: 200  # MB
+  max_message_size: 200  # MB
+
+# Generation Configuration
+generation:
+  default_steps: 28
+  default_cfg_scale: 5.0
+  default_resolution: 128
+  max_steps: 100
+  max_cfg_scale: 20.0
+  max_resolution: 1024
+  min_resolution: 64
+
+# Storage Configuration
+storage:
+  output_dir: "outputs"
+  api_output_dir: "outputs/api"
+  ui_output_dir: "outputs/ui"
+  max_generations: 1000  # Maximum number of generations to keep
+  cleanup_interval: 3600  # Seconds between cleanup runs
+
+# Performance Configuration
+performance:
+  enable_torch_compile: false  # Experimental torch.compile optimization
+  enable_cuda_graphs: false  # CUDA graphs for speedup
+  memory_efficient_attention: false  # Memory-efficient attention
+  allow_tf32: true  # Allow TF32 on Ampere GPUs
+
+# Logging Configuration
+logging:
+  level: "INFO"  # Options: DEBUG, INFO, WARNING, ERROR, CRITICAL
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: "logs/flowcraft.log"
+  max_bytes: 10485760  # 10 MB
+  backup_count: 5
+
+# Security Configuration
+security:
+  enable_auth: false
+  api_key_required: false
+  rate_limit:
+    enabled: false
+    requests_per_minute: 60
+  cors_origins:
+    - "*"
+
+# Monitoring Configuration
+monitoring:
+  enable_metrics: false
+  enable_tracing: false
+  metrics_port: 9090

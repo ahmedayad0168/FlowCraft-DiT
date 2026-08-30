@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="440" viewBox="0 0 960 440" role="img" aria-labelledby="title desc">
+  <title id="title">FlowCraft-DiT training loss</title>
+  <desc id="desc">Logged 100-step average flow-matching loss declines from 1.61 near step 100 to 1.02 at step 10000.</desc>
+  <rect width="960" height="440" fill="#0d1220"/>
+  <text x="64" y="42" fill="#f8fafc" font-family="Arial, sans-serif" font-size="24" font-weight="700">FlowCraft-DiT baseline training loss</text>
+  <text x="64" y="70" fill="#94a3b8" font-family="Arial, sans-serif" font-size="14">100-step logged averages · 128px · 10.1M parameters · batch 4 · 10,000 steps</text>
+  <g stroke="#334155" stroke-width="1">
+    <line x1="85" y1="100" x2="910" y2="100"/>
+    <line x1="85" y1="175" x2="910" y2="175"/>
+    <line x1="85" y1="250" x2="910" y2="250"/>
+    <line x1="85" y1="325" x2="910" y2="325"/>
+    <line x1="85" y1="375" x2="910" y2="375"/>
+    <line x1="85" y1="100" x2="85" y2="375"/>
+    <line x1="85" y1="375" x2="910" y2="375"/>
+  </g>
+  <g fill="#cbd5e1" font-family="Arial, sans-serif" font-size="13">
+    <text x="36" y="105">1.60</text><text x="36" y="180">1.40</text><text x="36" y="255">1.20</text><text x="36" y="330">1.00</text>
+    <text x="76" y="402">0</text><text x="264" y="402">2.5k</text><text x="470" y="402">5k</text><text x="675" y="402">7.5k</text><text x="886" y="402">10k</text>
+  </g>
+  <path d="M93 94 L126 223 L168 275 L209 287 L251 310 L292 323 L334 322 L375 330 L416 344 L457 343 L498 347 L539 340 L580 352 L621 347 L662 351 L703 348 L744 357 L785 351 L826 357 L867 355 L908 356" fill="none" stroke="#38bdf8" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="93" cy="94" r="5" fill="#a5f3fc"/><circle cx="908" cy="356" r="5" fill="#a5f3fc"/>
+  <text x="100" y="116" fill="#a5f3fc" font-family="Arial, sans-serif" font-size="13">1.6147</text>
+  <text x="838" y="340" fill="#a5f3fc" font-family="Arial, sans-serif" font-size="13">1.0158</text>
+</svg>
