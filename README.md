@@ -304,44 +304,65 @@ All generated assets are available in `docs/assets/`:
 
 ---
 
-## 🎓 Key Research References
+## 🔬 Research Foundations & References
 
-1. **Flow Matching for Generative Modeling** — Lipman et al., 2022
+FlowCraft-DiT builds upon research in **Flow Matching, Rectified Flow, Diffusion Transformers, Multimodal Transformers, CLIP, and Latent Diffusion Models**. The following works provide the theoretical and architectural foundations behind the implementation.
 
-   * Vector field training and probability paths.
-   * [Flow Matching for Generative Modeling](https://arxiv.org/abs/2210.02747)
+### 🌊 Flow Matching & Rectified Flow
 
-2. **Flow Straight and Fast: Learning to Generate and Transfer Data with Rectified Flow** — Liu et al., 2022
+**1. Flow Matching for Generative Modeling** — Lipman et al., 2022
+Introduces Flow Matching, a simulation-free framework for learning continuous vector fields along probability paths.
 
-   * Rectified Flow, straight-line ODE trajectories, and efficient sampling.
-   * [Flow Straight and Fast: Learning to Generate and Transfer Data with Rectified Flow](https://arxiv.org/abs/2209.03003)
+* [Flow Matching for Generative Modeling](https://arxiv.org/abs/2210.02747)
 
-3. **Rectified Flow — Official Implementation**
+**2. Flow Straight and Fast: Learning to Generate and Transfer Data with Rectified Flow** — Liu et al., 2022
+Introduces Rectified Flow, using approximately straight ODE trajectories to enable efficient and deterministic generative transport.
 
-   * Official implementation of Rectified Flow with practical examples.
-   * [Rectified Flow — Official Implementation](https://github.com/gnobitab/RectifiedFlow)
+* [Flow Straight and Fast: Learning to Generate and Transfer Data with Rectified Flow](https://arxiv.org/abs/2209.03003)
 
-4. **Scalable Diffusion Models with Transformers** — Peebles & Xie, 2022
+### 🧠 Transformer-Based Generation
 
-   * DiT architecture, patchification, and AdaLN conditioning.
-   * [Scalable Diffusion Models with Transformers](https://arxiv.org/abs/2212.09748)
+**3. Scalable Diffusion Models with Transformers** — Peebles & Xie, 2022
+Introduces the Diffusion Transformer (DiT), establishing transformer-based architectures for scalable image generation.
 
-5. **Scaling Rectified Flow Transformers for High-Resolution Image Synthesis** — Esser et al., 2024
+* [Scalable Diffusion Models with Transformers](https://arxiv.org/abs/2212.09748)
 
-   * Rectified Flow Transformers and the architecture underlying modern text-to-image systems.
-   * [Scaling Rectified Flow Transformers for High-Resolution Image Synthesis](https://arxiv.org/abs/2403.03206)
+**4. Scaling Rectified Flow Transformers for High-Resolution Image Synthesis** — Esser et al., 2024
+Explores large-scale Rectified Flow Transformers and multimodal transformer architectures for text-to-image synthesis, providing important architectural inspiration for MM-DiT.
 
-6. **Classifier-Free Diffusion Guidance** — Ho & Salimans, 2022
+* [Scaling Rectified Flow Transformers for High-Resolution Image Synthesis](https://arxiv.org/abs/2403.03206)
 
-   * Conditional generation and classifier-free guidance (CFG).
-   * [Classifier-Free Diffusion Guidance](https://arxiv.org/abs/2207.12598)
+### 🖼️ Text & Latent Representation
 
-7. **Denoising Diffusion Probabilistic Models** — Ho et al., 2020
+**5. Learning Transferable Visual Models From Natural Language Supervision** — Radford et al., 2021
+Introduces CLIP, providing the text-image representation framework used for extracting semantic text conditioning.
 
-   * Foundational diffusion modeling and denoising-based generation.
-   * [Denoising Diffusion Probabilistic Models](https://arxiv.org/abs/2006.11239)
+* [Learning Transferable Visual Models From Natural Language Supervision](https://arxiv.org/abs/2103.00020)
 
+**6. High-Resolution Image Synthesis with Latent Diffusion Models** — Rombach et al., 2021
+Introduces latent-space diffusion using pretrained autoencoders, forming the foundation for the latent representation pipeline used in modern text-to-image systems.
 
+* [High-Resolution Image Synthesis with Latent Diffusion Models](https://arxiv.org/abs/2112.10752)
+
+### 📚 Diffusion & Score-Based Foundations
+
+**7. Understanding Diffusion Models: A Unified Perspective** — Luo, 2022
+Provides a unified theoretical perspective on diffusion models, their training objectives, and their relationship to score-based generative modeling.
+
+* [Understanding Diffusion Models: A Unified Perspective](https://arxiv.org/abs/2208.11970)
+
+**8. Improved Techniques for Training Score-Based Generative Models** — Song & Ermon, 2020
+Presents techniques for improving the training and sampling of score-based generative models.
+
+* [Improved Techniques for Training Score-Based Generative Models](https://arxiv.org/abs/2006.09011)
+
+### 🛠️ Implementation Resource
+
+**9. Rectified Flow — Official Implementation**
+Official implementation of Rectified Flow accompanying the ICLR 2023 Spotlight work, providing practical reference implementations and experiments.
+
+* [Rectified Flow — Official Implementation](https://github.com/gnobitab/RectifiedFlow)
+  
 ---
 
 ## 📝 Requirements
