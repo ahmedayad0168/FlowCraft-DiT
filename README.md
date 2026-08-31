@@ -304,19 +304,43 @@ All generated assets are available in `docs/assets/`:
 
 ---
 
-## 🎓 Key Papers
+## 🎓 Key Research References
 
-1. **Flow Matching for Generative Modeling** (Lipman et al., 2022)
-   - Vector field training, probability paths
-   - [Paper](https://arxiv.org/abs/2210.02747)
+1. **Flow Matching for Generative Modeling** — Lipman et al., 2022
 
-2. **Scalable Diffusion Models with Transformers** (Peebles & Xie, 2022)
-   - DiT architecture, AdaLN, patchification
-   - [Paper](https://arxiv.org/abs/2212.09748)
+   * Vector field training and probability paths.
+   * [Flow Matching for Generative Modeling](https://arxiv.org/abs/2210.02747)
 
-3. **Scaling Rectified Flow Transformers** (Esser et al., 2024)
-   - MM-DiT, rectified flow choices
-   - [Paper](https://arxiv.org/abs/2406.09047)
+2. **Flow Straight and Fast: Learning to Generate and Transfer Data with Rectified Flow** — Liu et al., 2022
+
+   * Rectified Flow, straight-line ODE trajectories, and efficient sampling.
+   * [Flow Straight and Fast: Learning to Generate and Transfer Data with Rectified Flow](https://arxiv.org/abs/2209.03003)
+
+3. **Rectified Flow — Official Implementation**
+
+   * Official implementation of Rectified Flow with practical examples.
+   * [Rectified Flow — Official Implementation](https://github.com/gnobitab/RectifiedFlow)
+
+4. **Scalable Diffusion Models with Transformers** — Peebles & Xie, 2022
+
+   * DiT architecture, patchification, and AdaLN conditioning.
+   * [Scalable Diffusion Models with Transformers](https://arxiv.org/abs/2212.09748)
+
+5. **Scaling Rectified Flow Transformers for High-Resolution Image Synthesis** — Esser et al., 2024
+
+   * Rectified Flow Transformers and the architecture underlying modern text-to-image systems.
+   * [Scaling Rectified Flow Transformers for High-Resolution Image Synthesis](https://arxiv.org/abs/2403.03206)
+
+6. **Classifier-Free Diffusion Guidance** — Ho & Salimans, 2022
+
+   * Conditional generation and classifier-free guidance (CFG).
+   * [Classifier-Free Diffusion Guidance](https://arxiv.org/abs/2207.12598)
+
+7. **Denoising Diffusion Probabilistic Models** — Ho et al., 2020
+
+   * Foundational diffusion modeling and denoising-based generation.
+   * [Denoising Diffusion Probabilistic Models](https://arxiv.org/abs/2006.11239)
+
 
 ---
 
