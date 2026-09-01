@@ -26,8 +26,8 @@ from typing import Dict, List, Set, Tuple
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
-ANNOTATIONS_URL = "http://images.cocodataset.org/annotations/annotations_trainval2017.zip"
-IMAGE_BASE_URL = "http://images.cocodataset.org/train2017"
+ANNOTATIONS_URL = "https://images.cocodataset.org/annotations/annotations_trainval2017.zip"
+IMAGE_BASE_URL = "https://images.cocodataset.org/train2017"
 CAPTIONS_MEMBER = "annotations/captions_train2017.json"
 USER_AGENT = "Mozilla/5.0"
 
@@ -43,7 +43,8 @@ def http_get(url: str, retries: int, retry_delay: float, timeout: int = 60) -> b
         except (HTTPError, URLError, TimeoutError, OSError) as exc:
             last_error = exc
             if attempt < retries:
-                time.sleep(retry_delay * attempt)
+                sleep_time = retry_delay * (2 ** (attempt - 1))
+                time.sleep(sleep_time)
     raise RuntimeError(f"Failed to download {url}: {last_error}")
 
 
