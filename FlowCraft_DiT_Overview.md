@@ -700,7 +700,8 @@ The implementation is **educationally excellent** and **technically correct**. P
 
 ### Generated Image Examples
 
-![Gemini Generated Example](docs/preview_step5000.png)
+![Generated Example](docs/preview_step5000.png)
+![Generated Example](docs/assets/training-step-10000.png)
 
 ---
 
