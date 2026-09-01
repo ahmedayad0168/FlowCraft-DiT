@@ -11,6 +11,8 @@ Wires together:
 Usage:
     python app/train.py --data_dir data/coco_30k --out_dir checkpoints --resolution 256 --batch_size 4 --grad_accum 4 --steps 50000 --lr 1e-4 --hidden_dim 768 --depth 12 --num_heads 12 --patch_size 2 --cond_dropout 0.1 --ema_decay 0.999 --precision bf16 --log_every 50 --save_every 2000 --preview_every 500 --preview_prompt "a photo of a dog on a beach" --preview_cfg 5.0 --preview_steps 28
     python app/train.py --data_dir data/coco_10k --out_dir checkpoints --resolution 128 --batch_size 4 --grad_accum 1 --steps 2000 --lr 1e-4 --hidden_dim 256 --depth 4 --num_heads 4 --patch_size 2 --cond_dropout 0.1 --ema_decay 0.999 --precision bf16 --log_every 100 --save_every 500 --preview_every 500 --preview_prompt "a photo of a dog" --preview_cfg 3.0 --preview_steps 15    
+
+reuse: python app/train.py --resume checkpoints/flowcraft_step5000.pt --hidden_dim 256 --depth 4 --num_heads 4 --patch_size 2 --steps 20000
     """
 
 from __future__ import annotations
@@ -27,7 +29,7 @@ from typing import List, Optional, Tuple
 import torch
 import torchvision.transforms as T
 from PIL import Image
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader, Dataset, random_split
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))  # repo root
 
@@ -67,10 +69,12 @@ class CocoCaptionDataset(Dataset):
             )
         if missing:
             print(f"[data] skipped {missing} caption rows whose image file is missing")
+        
         if max_samples is not None:
             if max_samples < 1:
                 raise ValueError(f"max_samples must be positive when set, got {max_samples}.")
-            rows = rows[:max_samples]
+            
+            rows = rows[:min(max_samples, len(rows))]
             print(f"[data] limiting training to {len(rows)} caption rows for an overfit/debug run")
         self.rows = rows
 
@@ -163,7 +167,6 @@ def save_preview(
         cfg_scale=args.preview_cfg,
         device=device,
         generator=generator,
-        # Let sampler infer dtype from model (avoids mismatches)
         model_kwargs={"txt_mask": mask, "pooled_text": pooled},
         null_model_kwargs={"txt_mask": null_mask, "pooled_text": null_pooled},
     )
@@ -215,6 +218,12 @@ def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
         type=int,
         default=None,
         help="Limit caption rows for a deliberate tiny-set overfit/debug experiment.",
+    )
+    parser.add_argument(
+        "--val_split",
+        type=float,
+        default=0.0,
+        help="Fraction of data to use for validation (0 disables)."
     )
     parser.add_argument("--gradient_checkpointing", action="store_true")
     parser.add_argument("--text_encoder_id", type=str, default=DEFAULT_TEXT_ENCODER_ID)
@@ -272,7 +281,6 @@ def main(argv: Optional[List[str]] = None) -> None:
     scaler = torch.amp.GradScaler(device.type, enabled=autocast_dtype == torch.float16)
     ema = EMA(model, decay=args.ema_decay) if args.ema_decay > 0 else None
 
-    # --- CRITICAL FIX: use standard linear interpolation (sigma_min=0.0) ---
     cfm = ConditionalFlowMatcher(sigma_min=0.0)
     t_sampler = LogitNormalSampler()
 
@@ -290,12 +298,21 @@ def main(argv: Optional[List[str]] = None) -> None:
         start_step = ckpt["step"]
         print(f"Resumed from {args.resume} at step {start_step}")
 
-    dataset = CocoCaptionDataset(
+    full_dataset = CocoCaptionDataset(
         args.data_dir, resolution=args.resolution, max_samples=args.max_samples
     )
-    print(f"Dataset: {len(dataset)} image/caption pairs")
+    if args.val_split > 0:
+        val_len = int(len(full_dataset) * args.val_split)
+        train_len = len(full_dataset) - val_len
+        train_dataset, val_dataset = random_split(full_dataset, [train_len, val_len])
+        print(f"Train samples: {train_len}, Val samples: {val_len}")
+    else:
+        train_dataset = full_dataset
+        val_dataset = None
+        print(f"Train samples: {len(train_dataset)}")
+
     loader = DataLoader(
-        dataset,
+        train_dataset,
         batch_size=args.batch_size,
         shuffle=True,
         num_workers=args.num_workers,
@@ -390,6 +407,29 @@ def main(argv: Optional[List[str]] = None) -> None:
             )
             running_loss, logged_steps = 0.0, 0
 
+        if val_dataset is not None and step % args.log_every == 0:
+            model.eval()
+            val_loss = 0.0
+            val_steps = 0
+            with torch.no_grad():
+                for val_imgs, val_caps in DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False, num_workers=0):
+                    val_caps = list(val_caps)
+                    val_latents = encode_images(vae, val_imgs, device, encoder_dtype)
+                    val_text, val_pooled, val_mask = encode_text(tokenizer, text_encoder, val_caps, device)
+                    t_val = t_sampler.sample(val_latents.shape[0], device=device, dtype=torch.float32)
+                    with torch.autocast(device.type, dtype=autocast_dtype, enabled=use_autocast):
+                        loss_val = cfm.compute_loss(
+                            model, val_latents, val_text, t=t_val,
+                            model_kwargs={"txt_mask": val_mask, "pooled_text": val_pooled}
+                        )
+                    val_loss += loss_val.item()
+                    val_steps += 1
+                    if val_steps >= 10:  # limit to 10 batches for speed
+                        break
+            val_loss /= max(1, val_steps)
+            print(f"step {step} | val loss {val_loss:.4f}")
+            model.train()
+
         if args.preview_every and step % args.preview_every == 0:
             try:
                 preview_model = ema.shadow if ema is not None else model
@@ -398,7 +438,7 @@ def main(argv: Optional[List[str]] = None) -> None:
                     out_dir / f"preview_step{step}.png", args.preview_prompt,
                 )
                 model.train()
-            except Exception as exc:  # previews must never kill a training run
+            except Exception as exc:
                 print(f"[warn] preview failed at step {step}: {exc}")
 
         if step % args.save_every == 0 or step == args.steps:
