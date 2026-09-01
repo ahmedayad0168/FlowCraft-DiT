@@ -93,6 +93,8 @@ class FlowCraftPipeline:
         self.demo_mode = checkpoint is None
         self.ckpt = None
         self.training_resolution: Optional[int] = None
+        self.vae_scaling_factor: Optional[float] = None  
+    
         
         # Load checkpoint
         if checkpoint is not None:
@@ -183,6 +185,8 @@ class FlowCraftPipeline:
                 .eval()
                 .requires_grad_(False)
             )
+            self.vae_scaling_factor = self.vae.config.scaling_factor
+            logger.info(f"VAE scaling factor: {self.vae_scaling_factor}")
         except Exception as e:
             logger.error(f"Failed to load encoders: {e}")
             raise
@@ -192,9 +196,9 @@ class FlowCraftPipeline:
         if self.ckpt:
             if "config" not in self.ckpt:
                 raise KeyError("Checkpoint does not contain a model config.")
+
             config = MMDiTConfig(**self.ckpt["config"])
         else:
-            # Random demo model
             config = MMDiTConfig(
                 in_channels=self.vae.config.latent_channels,
                 hidden_dim=256,
@@ -203,29 +207,79 @@ class FlowCraftPipeline:
                 txt_dim=self.text_encoder.config.hidden_size,
                 pooled_dim=self.text_encoder.config.hidden_size,
             )
-        
+
+        logger.info("Creating FlowCraft MM-DiT model on CPU...")
         self.model = FlowCraftMMDiT(config)
-        
-        # Load weights
+
+        # --------------------------------------------------------
+        # IMPORTANT: verify that the model is not on META device
+        # --------------------------------------------------------
+        meta_params = [
+            name for name, param in self.model.named_parameters()
+            if param.device.type == "meta"
+        ]
+
+        if meta_params:
+            raise RuntimeError(
+                "FlowCraft model was created with META parameters before "
+                f"checkpoint loading. First parameters: {meta_params[:10]}"
+            )
+
+        # --------------------------------------------------------
+        # Load checkpoint weights
+        # --------------------------------------------------------
         if self.ckpt:
-            if self.ckpt.get("ema_state"):
-                weights = self.ckpt["ema_state"]
+            if use_ema := self.ckpt.get("ema_state"):
+                weights = use_ema
                 logger.info("Using EMA weights")
             else:
                 weights = self.ckpt["model_state"]
                 logger.info("Using raw model weights")
-            
-            self.model.load_state_dict(weights)
-        
-        self.model = (
-            self.model
-            .to(self.device, self.dtype)
-            .eval()
-            .requires_grad_(False)
+
+            # Checkpoint should contain real tensors
+            meta_weights = [
+                name for name, value in weights.items()
+                if isinstance(value, torch.Tensor) and value.device.type == "meta"
+            ]
+
+            if meta_weights:
+                raise RuntimeError(
+                    "Checkpoint contains META tensors. "
+                    f"First affected keys: {meta_weights[:10]}"
+                )
+
+            missing, unexpected = self.model.load_state_dict(
+                weights,
+                strict=False,
+            )
+
+            if missing:
+                logger.warning(
+                    f"Missing model keys ({len(missing)}): {missing[:10]}"
+                )
+
+            if unexpected:
+                logger.warning(
+                    f"Unexpected model keys ({len(unexpected)}): {unexpected[:10]}"
+                )
+
+        # --------------------------------------------------------
+        # Move AFTER loading weights
+        # --------------------------------------------------------
+        self.model = self.model.to(
+            device=self.device,
+            dtype=self.dtype,
         )
-        
+
+        self.model.eval()
+        self.model.requires_grad_(False)
+
         self.cfg = config
-        logger.info(f"Model loaded: {config}")
+
+        logger.info(
+            f"Model loaded successfully | "
+            f"device={self.device} | dtype={self.dtype}"
+        )
 
     @torch.no_grad()
     def _encode_text(self, prompts: List[str]) -> tuple:
@@ -278,9 +332,9 @@ class FlowCraftPipeline:
             resolution = max(align, (int(config.resolution) // align) * align)
             
             if self.training_resolution is not None and resolution != self.training_resolution:
-                raise ValueError(
-                    f"Checkpoint trained at {self.training_resolution}px. "
-                    f"Generate at that resolution first."
+                logger.warning(
+                    f"Checkpoint trained at {self.training_resolution}px, but requested {resolution}px. "
+                    "This may cause quality degradation."
                 )
             
             latent_size = resolution // VAE_SCALE_FACTOR
@@ -308,7 +362,8 @@ class FlowCraftPipeline:
             
             # VAE decode
             latents = latents.float()
-            latents = latents / self.vae.config.scaling_factor
+            scaling_factor = self.vae_scaling_factor or self.vae.config.scaling_factor
+            latents = latents / scaling_factor
             decoded = self.vae.decode(latents).sample
             
             # Denormalize and convert to PIL
