@@ -7,6 +7,7 @@ from PIL import Image
 from scipy import linalg
 from torch.utils.data import DataLoader, Dataset
 from torchvision.models import Inception_V3_Weights, inception_v3
+import torchvision.transforms as T
 
 from utils.torch_utils import default_device
 
@@ -42,12 +43,16 @@ class FIDEvaluator:
         self.num_workers = num_workers
 
         weights = Inception_V3_Weights.DEFAULT
-        self.inception = inception_v3(weights=weights, transform_input=False, aux_logits=True)
+        self.inception = inception_v3(weights=weights, transform_input=False, aux_logits=False)
         self.inception.fc = torch.nn.Identity()  # 2048-d pool features
         self.inception = self.inception.to(self.device).eval()
 
         # The weights' own preprocessing: resize/crop to 299 + matching normalization.
         self.transform = weights.transforms()
+        self.transform = T.Compose([
+            T.Resize(299),
+            self.transform
+        ])
 
     @torch.no_grad()
     def get_features(self, folder_path: str, batch_size: int = 32) -> np.ndarray:
@@ -90,8 +95,11 @@ class FIDEvaluator:
         return float(diff.dot(diff) + np.trace(sigma_real + sigma_fake - 2.0 * covmean))
 
     def calculate_fid(self, real_folder: str, fake_folder: str, batch_size: int = 32) -> float:
-        feat_real = self.get_features(real_folder, batch_size)
-        feat_fake = self.get_features(fake_folder, batch_size)
+        try:
+            feat_real = self.get_features(real_folder, batch_size)
+            feat_fake = self.get_features(fake_folder, batch_size)
+        except FileNotFoundError as e:
+            raise FileNotFoundError(f"FID calculation failed: {e}")
 
         min_samples = min(feat_real.shape[0], feat_fake.shape[0])
         if min_samples < 2048:
