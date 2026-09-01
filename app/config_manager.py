@@ -19,6 +19,8 @@ try:
     YAML_AVAILABLE = True
 except ImportError:
     YAML_AVAILABLE = False
+    import warnings
+    warnings.warn("PyYAML not installed; configuration will use defaults only.")
 
 # Add project root to Python path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -129,65 +131,67 @@ class ProductionConfig:
 
 class ConfigManager:
     """Configuration manager for loading and validating config."""
-    
+
     def __init__(self, config_path: Optional[str] = None):
         self.config_path = config_path or "config/production.yaml"
         self.config = self._load_config()
-    
+
     def _load_config(self) -> ProductionConfig:
         """Load configuration from file and environment variables."""
         # Start with defaults
         config = ProductionConfig()
-        
+
         # Load from YAML if available
         if YAML_AVAILABLE and Path(self.config_path).exists():
             config = self._load_from_yaml(config)
-        
+        elif not YAML_AVAILABLE:
+            logging.warning("PyYAML not available; using default configuration.")
+
         # Override with environment variables
         config = self._load_from_env(config)
-        
+
         # Validate configuration
         self._validate_config(config)
-        
+
         return config
-    
+
     def _load_from_yaml(self, config: ProductionConfig) -> ProductionConfig:
         """Load configuration from YAML file."""
         try:
             with open(self.config_path, 'r') as f:
                 yaml_config = yaml.safe_load(f)
-            
+
             if not yaml_config:
                 return config
-            
+
             # Update model config
             if 'model' in yaml_config:
                 config.model = ModelConfig(**yaml_config['model'])
-            
+
             # Update API config
             if 'api' in yaml_config:
                 config.api = APIConfig(**yaml_config['api'])
-            
+
             # Update UI config
             if 'ui' in yaml_config:
                 config.ui = UIConfig(**yaml_config['ui'])
-            
+
             # Update generation config
             if 'generation' in yaml_config:
                 config.generation = GenerationConfig(**yaml_config['generation'])
-            
+
             # Update storage config
             if 'storage' in yaml_config:
                 config.storage = StorageConfig(**yaml_config['storage'])
-            
+
             # Update performance config
             if 'performance' in yaml_config:
                 config.performance = PerformanceConfig(**yaml_config['performance'])
-            
+
             # Update logging config
             if 'logging' in yaml_config:
                 config.logging = LoggingConfig(**yaml_config['logging'])
-            
+
             # Update security config
             if 'security' in yaml_config:
                 security_data = yaml_config['security']
@@ -198,65 +202,65 @@ class ConfigManager:
                     rate_limit_rpm=security_data.get('rate_limit', {}).get('requests_per_minute', 60),
                     cors_origins=security_data.get('cors_origins', ['*'])
                 )
-            
+
             # Update monitoring config
             if 'monitoring' in yaml_config:
                 config.monitoring = MonitoringConfig(**yaml_config['monitoring'])
-            
+
             logging.info(f"Loaded configuration from {self.config_path}")
             return config
-            
+
         except Exception as e:
             logging.warning(f"Failed to load YAML config: {e}. Using defaults.")
             return config
-    
+
     def _load_from_env(self, config: ProductionConfig) -> ProductionConfig:
         """Load configuration from environment variables."""
         # Model configuration
         config.model.checkpoint_path = os.getenv('FLOWCRAFT_CHECKPOINT', config.model.checkpoint_path)
         config.model.device = os.getenv('FLOWCRAFT_DEVICE', config.model.device)
         config.model.dtype = os.getenv('FLOWCRAFT_DTYPE', config.model.dtype)
-        
+
         # API configuration
         config.api.host = os.getenv('FLOWCRAFT_API_HOST', config.api.host)
         config.api.port = int(os.getenv('FLOWCRAFT_API_PORT', str(config.api.port)))
         config.api.workers = int(os.getenv('FLOWCRAFT_API_WORKERS', str(config.api.workers)))
-        
+
         # UI configuration
         config.ui.port = int(os.getenv('FLOWCRAFT_UI_PORT', str(config.ui.port)))
-        
+
         # Generation configuration
         config.generation.default_steps = int(os.getenv('FLOWCRAFT_DEFAULT_STEPS', str(config.generation.default_steps)))
         config.generation.default_cfg_scale = float(os.getenv('FLOWCRAFT_DEFAULT_CFG', str(config.generation.default_cfg_scale)))
         config.generation.default_resolution = int(os.getenv('FLOWCRAFT_DEFAULT_RESOLUTION', str(config.generation.default_resolution)))
-        
+
         # Storage configuration
         config.storage.output_dir = os.getenv('FLOWCRAFT_OUTPUT_DIR', config.storage.output_dir)
-        
+
         # Logging configuration
         config.logging.level = os.getenv('FLOWCRAFT_LOG_LEVEL', config.logging.level)
         config.logging.file = os.getenv('FLOWCRAFT_LOG_FILE', config.logging.file)
-        
+
         return config
-    
+
     def _validate_config(self, config: ProductionConfig):
         """Validate configuration values."""
         # Validate device
         valid_devices = ['cuda', 'cpu', 'mps', 'auto']
         if config.model.device not in valid_devices:
             raise ValueError(f"Invalid device: {config.model.device}. Must be one of {valid_devices}")
-        
+
         # Validate dtype
         valid_dtypes = ['bfloat16', 'float16', 'float32']
         if config.model.dtype not in valid_dtypes:
             raise ValueError(f"Invalid dtype: {config.model.dtype}. Must be one of {valid_dtypes}")
-        
+
         # Validate ports
         if not (1 <= config.api.port <= 65535):
             raise ValueError(f"Invalid API port: {config.api.port}")
         if not (1 <= config.ui.port <= 65535):
             raise ValueError(f"Invalid UI port: {config.ui.port}")
-        
+
         # Validate generation parameters
         if not (1 <= config.generation.default_steps <= config.generation.max_steps):
             raise ValueError(f"Invalid default_steps: {config.generation.default_steps}")
@@ -264,22 +268,22 @@ class ConfigManager:
             raise ValueError(f"Invalid default_cfg_scale: {config.generation.default_cfg_scale}")
         if not (config.generation.min_resolution <= config.generation.default_resolution <= config.generation.max_resolution):
             raise ValueError(f"Invalid default_resolution: {config.generation.default_resolution}")
-        
+
         # Validate logging level
         valid_log_levels = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
         if config.logging.level.upper() not in valid_log_levels:
             raise ValueError(f"Invalid log level: {config.logging.level}")
-        
+
         logging.info("Configuration validated successfully")
-    
+
     def setup_logging(self):
         """Setup logging based on configuration."""
         log_level = getattr(logging, self.config.logging.level.upper())
-        
+
         # Create logs directory if it doesn't exist
         log_file = Path(self.config.logging.file)
         log_file.parent.mkdir(parents=True, exist_ok=True)
-        
+
         # Configure logging
         logging.basicConfig(
             level=log_level,
@@ -293,16 +297,16 @@ class ConfigManager:
                 logging.StreamHandler()
             ]
         )
-        
+
         logging.info(f"Logging configured at {self.config.logging.level} level")
-    
+
     def setup_directories(self):
         """Setup required directories."""
         # Create output directories
         Path(self.config.storage.output_dir).mkdir(parents=True, exist_ok=True)
         Path(self.config.storage.api_output_dir).mkdir(parents=True, exist_ok=True)
         Path(self.config.storage.ui_output_dir).mkdir(parents=True, exist_ok=True)
-        
+
         logging.info("Output directories created")
 
 
