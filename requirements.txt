@@ -1,22 +1,21 @@
 # Core (training + inference)
-torch>=2.1
-torchvision>=0.16
-numpy>=1.24
-pillow>=10.0
-scipy>=1.10
-transformers>=4.40
-diffusers>=0.27
-safetensors>=0.4
+torch>=2.1,<2.3
+torchvision>=0.16,<0.18
+numpy>=1.24,<2.0
+pillow>=10.0,<11.0
+scipy>=1.10,<2.0
+transformers>=4.40,<5.0
+diffusers>=0.27,<1.0
+safetensors>=0.4,<1.0
 
 # Demo app
-streamlit>=1.28
-gradio>=4.0
+streamlit>=1.28,<2.0
 
 # Production API
-fastapi>=0.104
-uvicorn>=0.24
-pydantic>=2.0
-pyyaml>=6.0
+fastapi>=0.104,<0.110
+uvicorn[standard]>=0.24,<0.30
+pydantic>=2.0,<3.0
+pyyaml>=6.0,<7.0
 
 # Optional: evaluation utilities
 # eval/fid.py         -> torchvision (already required)
@@ -24,5 +23,7 @@ pyyaml>=6.0
 # eval/mllm_judge.py  -> openai
 # training/repa.py    -> torch.hub DINOv2 download at runtime
 
+slowapi>=0.1.9
+
 # Tests
-pytest>=8.0
+pytest>=8.0,<9.0
