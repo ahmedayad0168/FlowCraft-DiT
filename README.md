@@ -520,7 +520,7 @@ This is an educational/research project. Contributions are welcome, especially:
 
 ## 📄 License
 
-Distributed under the MIT License.
+FlowCraft-DiT is released under the [MIT License](LICENSE).
 
 ---
 
