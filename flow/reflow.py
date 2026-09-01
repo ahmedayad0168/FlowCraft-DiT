@@ -68,3 +68,14 @@ class ReflowPipeline:
         xt, target_velocity = self.cfm.sample_location_and_target(x0, x1_pred, t)
         pred_velocity = student_model(xt, t, text_embeds, **(model_kwargs or {}))
         return F.mse_loss(pred_velocity.float(), target_velocity.float())
+
+    def save_student_checkpoint(self, student_model: nn.Module, path: str, step: int, config: Dict = None):
+        """Save the student model checkpoint."""
+        payload = {
+            "model_state": student_model.state_dict(),
+            "step": step,
+            "config": config or {},
+            "type": "reflow_student"
+        }
+        torch.save(payload, path)
+        print(f"[reflow] saved student checkpoint to {path}")
