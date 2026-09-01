@@ -180,7 +180,7 @@ The model demonstrates steady convergence with the overfit test (500 steps) achi
 ### 1. Installation
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/ahmedayad0168/FlowCraft-DiT.git
 cd FlowCraft-DiT
 pip install -r requirements.txt
 ```
